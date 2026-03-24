@@ -6,8 +6,8 @@
 ## パッケージマネージャー
 
 - **name**: pnpm
-- **setup**: `corepack enable && corepack prepare pnpm@latest --activate`
-- **note**: Node.js 16.13+ で corepack が同梱されている
+- **check**: `pnpm -v`
+- **note**: グローバルにインストール済みであることを前提とする。未インストールの場合はユーザーに案内する
 
 ## フレームワーク
 
