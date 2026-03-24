@@ -1,5 +1,5 @@
 ---
-name: coding-principals
+name: coding-principles
 description: Review TypeScript code for quality, maintainability, and adherence to coding principles. Use when reviewing TypeScript code, examining code changes, or when the user asks for a code review based on coding principles.
 ---
 
