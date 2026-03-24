@@ -1,5 +1,5 @@
 ---
-name: rails-best-practices
+name: best-practices/rails
 description: Railsコードをベストプラクティスに基づいてレビュー・評価するスキル。ActiveRecord、コントローラー、ルーティング、セキュリティ、パフォーマンス、テスト等の観点からRailsコードの品質を確認する際に使用する。
 ---
 
