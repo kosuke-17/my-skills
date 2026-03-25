@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "sessionEnd": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "preToolUse": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "postToolUse": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "subagentStart": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "subagentStop": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "beforeMCPExecution": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "afterMCPExecution": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "beforeReadFile": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "afterFileEdit": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "beforeSubmitPrompt": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "preCompact": [{ "command": "node .cursor/hooks/audit.mjs" }],
+    "stop": [{ "command": "node .cursor/hooks/audit.mjs" }]
+  }
+}
