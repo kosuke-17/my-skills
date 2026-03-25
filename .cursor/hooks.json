@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "beforeSubmitPrompt": [
+      { "command": "node .cursor/agent-audit.mjs" }
+    ],
+    "beforeShellExecution": [
+      { "command": "node .cursor/agent-audit.mjs" }
+    ],
+    "beforeMCPExecution": [
+      { "command": "node .cursor/agent-audit.mjs" }
+    ],
+    "beforeReadFile": [
+      { "command": "node .cursor/agent-audit.mjs" }
+    ],
+    "afterFileEdit": [
+      { "command": "node .cursor/agent-audit.mjs" }
+    ],
+    "stop": [
+      { "command": "node .cursor/agent-audit.mjs" }
+    ]
+  }
+}
