@@ -24,10 +24,16 @@
   ├── app.service.ts         # ルートサービス
   ├── config/
   │   └── configuration.ts   # 環境変数・設定管理
-  ├── database/
-  │   └── database.module.ts # データベースモジュール
+  ├── prisma/
+  │   ├── prisma.service.ts  # PrismaClient ラッパー（OnModuleInit）
+  │   └── prisma.module.ts   # グローバル Prisma モジュール
   └── modules/               # 機能モジュール格納先
       └── .gitkeep
+  ```
+  プロジェクトルートには以下も生成される（`npx prisma init` による）:
+  ```
+  prisma/
+  └── schema.prisma          # Prisma スキーマ定義
   ```
 - **entrypoint**: `src/main.ts` に NestFactory.create でアプリケーションを起動する
 
@@ -47,39 +53,68 @@
 ## データベース
 
 - **name**: PostgreSQL
-- **command**: `pnpm add @nestjs/typeorm typeorm pg @nestjs/config`
-- **config**: `src/database/database.module.ts` に TypeORM の設定を作成する
+- **orm**: Prisma
+- **command**: `pnpm add @prisma/client @nestjs/config` と `pnpm add -D prisma`
+- **init**: `npx prisma init` でプロジェクトルートに `prisma/schema.prisma` と `.env` が生成される
+- **schema**:
+  ```prisma
+  generator client {
+    provider = "prisma-client-js"
+  }
+
+  datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
+  ```
+- **env**: `.env` に `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app?schema=public"` を設定する
+- **config**: `src/prisma/prisma.service.ts` に PrismaClient のラッパーを作成する
 - **config_content**:
   ```typescript
-  import { Module } from '@nestjs/common';
-  import { TypeOrmModule } from '@nestjs/typeorm';
-  import { ConfigModule, ConfigService } from '@nestjs/config';
+  import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+  import { PrismaClient } from '@prisma/client';
 
-  @Module({
-    imports: [
-      TypeOrmModule.forRootAsync({
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          type: 'postgres',
-          host: configService.get('DB_HOST', 'localhost'),
-          port: configService.get<number>('DB_PORT', 5432),
-          username: configService.get('DB_USERNAME', 'postgres'),
-          password: configService.get('DB_PASSWORD', 'postgres'),
-          database: configService.get('DB_DATABASE', 'app'),
-          autoLoadEntities: true,
-          synchronize: false,
-        }),
-      }),
-    ],
-  })
-  export class DatabaseModule {}
+  @Injectable()
+  export class PrismaService
+    extends PrismaClient
+    implements OnModuleInit, OnModuleDestroy
+  {
+    async onModuleInit() {
+      await this.$connect();
+    }
+
+    async onModuleDestroy() {
+      await this.$disconnect();
+    }
+  }
   ```
+- **module_content**: `src/prisma/prisma.module.ts` にグローバルモジュールを作成する
+  ```typescript
+  import { Global, Module } from '@nestjs/common';
+  import { PrismaService } from './prisma.service';
+
+  @Global()
+  @Module({
+    providers: [PrismaService],
+    exports: [PrismaService],
+  })
+  export class PrismaModule {}
+  ```
+- **app_module_note**: `app.module.ts` の `imports` に `PrismaModule` と `ConfigModule.forRoot()` を追加する
 - **migration**:
-  - `pnpm add -D ts-node` をインストールする
-  - `package.json` に TypeORM CLI 用スクリプトを追加: `"typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js"`
-  - `src/database/data-source.ts` に DataSource 設定ファイルを作成する
-- **note**: 接続情報は環境変数から `@nestjs/config` の `ConfigService` 経由で取得する
+  - マイグレーション作成: `npx prisma migrate dev --name <migration-name>`
+  - マイグレーション適用（本番）: `npx prisma migrate deploy`
+  - クライアント再生成: `npx prisma generate`
+  - DB リセット（開発用）: `npx prisma migrate reset`
+  - `package.json` に以下のスクリプトを追加:
+    ```json
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "prisma:reset": "prisma migrate reset"
+    ```
+- **note**: 接続情報は `DATABASE_URL` 環境変数で管理する。`@nestjs/config` の `ConfigModule` はアプリケーション設定用に併用する
 
 ## テスト
 
@@ -107,7 +142,9 @@
   FROM base AS deps
   WORKDIR /app
   COPY package.json pnpm-lock.yaml ./
+  COPY prisma ./prisma/
   RUN pnpm install --frozen-lockfile
+  RUN pnpm prisma generate
 
   FROM base AS build
   WORKDIR /app
@@ -133,11 +170,7 @@
       ports:
         - "3000:3000"
       environment:
-        - DB_HOST=db
-        - DB_PORT=5432
-        - DB_USERNAME=postgres
-        - DB_PASSWORD=postgres
-        - DB_DATABASE=app
+        - DATABASE_URL=postgresql://postgres:postgres@db:5432/app?schema=public
       depends_on:
         db:
           condition: service_healthy
