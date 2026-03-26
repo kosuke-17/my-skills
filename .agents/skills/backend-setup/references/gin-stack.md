@@ -62,13 +62,28 @@
 
 ## データベース
 
-- **name**: PostgreSQL（GORM + golang-migrate）
+- **name**: PostgreSQL
+- **orm**: GORM + golang-migrate
+
+### ORM設定
+
 - **command**: `go get gorm.io/gorm gorm.io/driver/postgres github.com/golang-migrate/migrate/v4`
-- **config**: `internal/db/db.go` にデータベース接続設定（GORM）を作成する
+- **init**: `migrate/` ディレクトリを作成する
+- **verify**: `go.mod` に `gorm.io/gorm`, `gorm.io/driver/postgres`, `github.com/golang-migrate/migrate/v4` が追加されたことを確認する
+
+### DB設定
+
+- **env**: 環境変数 `DATABASE_URL` に接続文字列を設定する。形式: `postgres://user:password@host:port/dbname?sslmode=disable`
+- **datasource**: `internal/config/config.go` で `DATABASE_URL` を読み込む設定を確認する
 - **migration**:
-  - `migrate/` ディレクトリを作成し、`000001_init.up.sql` / `000001_init.down.sql` を管理する
+  - `migrate/` ディレクトリに `000001_init.up.sql` / `000001_init.down.sql` を管理する
   - `golang-migrate` CLI でマイグレーション実行: `migrate -path migrate -database "$DATABASE_URL" up`
-- **note**: 接続文字列は環境変数 `DATABASE_URL` から取得する。形式: `postgres://user:password@host:port/dbname?sslmode=disable`
+
+### アプリケーション設定
+
+- **service**: `internal/db/db.go` にデータベース接続設定（GORM）を作成する
+- **integration**: `cmd/server/main.go` で DB 接続を初期化し、ハンドラーに注入する
+- **verify**: `go build ./...` でビルドエラーがないことを確認する
 
 ## テスト
 

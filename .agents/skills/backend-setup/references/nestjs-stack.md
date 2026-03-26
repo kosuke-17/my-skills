@@ -54,9 +54,12 @@
 
 - **name**: PostgreSQL
 - **orm**: Prisma
-- **command**: `pnpm add @prisma/client @nestjs/config` と `pnpm add -D prisma`
+
+### ORM設定
+
+- **command**: `pnpm add @prisma/client` と `pnpm add -D prisma`
 - **init**: `npx prisma init` でプロジェクトルートに `prisma/schema.prisma` と `.env` が生成される
-- **schema**:
+- **verify**: `prisma/schema.prisma` が存在し、以下の初期内容を含むことを確認する
   ```prisma
   generator client {
     provider = "prisma-client-js"
@@ -67,9 +70,29 @@
     url      = env("DATABASE_URL")
   }
   ```
+
+### DB設定
+
 - **env**: `.env` に `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app?schema=public"` を設定する
-- **config**: `src/prisma/prisma.service.ts` に PrismaClient のラッパーを作成する
-- **config_content**:
+- **datasource**: `prisma/schema.prisma` の `datasource db` で `provider = "postgresql"` かつ `url = env("DATABASE_URL")` であることを確認する
+- **migration**:
+  - マイグレーション作成: `npx prisma migrate dev --name <migration-name>`
+  - マイグレーション適用（本番）: `npx prisma migrate deploy`
+  - クライアント再生成: `npx prisma generate`
+  - DB リセット（開発用）: `npx prisma migrate reset`
+  - `package.json` に以下のスクリプトを追加:
+    ```json
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "prisma:reset": "prisma migrate reset"
+    ```
+
+### アプリケーション設定
+
+- **command**: `pnpm add @nestjs/config`
+- **service**: `src/prisma/prisma.service.ts` に PrismaClient のラッパーを作成する
   ```typescript
   import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
   import { PrismaClient } from '@prisma/client';
@@ -88,7 +111,7 @@
     }
   }
   ```
-- **module_content**: `src/prisma/prisma.module.ts` にグローバルモジュールを作成する
+- **module**: `src/prisma/prisma.module.ts` にグローバルモジュールを作成する
   ```typescript
   import { Global, Module } from '@nestjs/common';
   import { PrismaService } from './prisma.service';
@@ -100,20 +123,8 @@
   })
   export class PrismaModule {}
   ```
-- **app_module_note**: `app.module.ts` の `imports` に `PrismaModule` と `ConfigModule.forRoot()` を追加する
-- **migration**:
-  - マイグレーション作成: `npx prisma migrate dev --name <migration-name>`
-  - マイグレーション適用（本番）: `npx prisma migrate deploy`
-  - クライアント再生成: `npx prisma generate`
-  - DB リセット（開発用）: `npx prisma migrate reset`
-  - `package.json` に以下のスクリプトを追加:
-    ```json
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio",
-    "prisma:reset": "prisma migrate reset"
-    ```
+- **integration**: `app.module.ts` の `imports` に `PrismaModule` と `ConfigModule.forRoot()` を追加する
+- **verify**: `pnpm build` でコンパイルエラーがないことを確認する
 - **note**: 接続情報は `DATABASE_URL` 環境変数で管理する。`@nestjs/config` の `ConfigModule` はアプリケーション設定用に併用する
 
 ## テスト

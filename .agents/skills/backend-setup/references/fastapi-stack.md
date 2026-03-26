@@ -62,13 +62,25 @@
 ## データベース
 
 - **name**: PostgreSQL
+- **orm**: SQLAlchemy + Alembic
+
+### ORM設定
+
 - **command**: `uv add sqlalchemy[asyncio] asyncpg alembic`
-- **config**: `app/db/session.py` にデータベース接続設定を作成する
-- **migration**:
-  - `uv run alembic init alembic` で Alembic を初期化する
-  - `alembic/env.py` を非同期対応に設定する
-  - `alembic.ini` の `sqlalchemy.url` を環境変数から読み込むように変更する
-- **note**: 接続文字列は環境変数 `DATABASE_URL` から取得する。形式: `postgresql+asyncpg://user:password@host:port/dbname`
+- **init**: `uv run alembic init alembic` で Alembic を初期化する
+- **verify**: `alembic/` ディレクトリと `alembic.ini` が生成されたことを確認する
+
+### DB設定
+
+- **env**: 環境変数 `DATABASE_URL` に接続文字列を設定する。形式: `postgresql+asyncpg://user:password@host:port/dbname`
+- **datasource**: `alembic.ini` の `sqlalchemy.url` を環境変数から読み込むように変更する。`alembic/env.py` を非同期対応に設定する
+- **migration**: Alembic CLI でマイグレーションを管理する
+
+### アプリケーション設定
+
+- **service**: `app/db/session.py` にデータベースセッション管理を作成する
+- **integration**: `app/main.py` のライフスパンイベントで DB 接続を管理する
+- **verify**: `uv run python -c "from app.db.session import ..."` でインポートエラーがないことを確認する
 
 ## テスト
 
